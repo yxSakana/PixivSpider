@@ -3,16 +3,15 @@
  @file: src/pixiv/pixiv.py
  @Description: 
 
-    单个作品              √
+    单个作品             √
     某个用户的所有作品     √
-    动态                 √
+    动态                √
     关注的用户的所有作品   √
  
  @author: sxy
  @data: 2023-07-16 19:55:15
  @update: 2023-07-16 19:55:15
 """
-
 
 import os
 import re
@@ -26,6 +25,8 @@ import requests
 import urllib.parse
 from lxml import etree
 
+from PyQt5.QtCore import QObject, pyqtSignal
+
 from utils.base_spider import BaseSpider
 from utils.logger import Logger
 from utils.thread_utils import ThreadUtils
@@ -33,27 +34,32 @@ from utils.mongodb import MongoDB
 
 
 class Pixiv(BaseSpider):
+    # signal
+    get_user_workId_signal = pyqtSignal(int)
+    # data model
     FollowRequestsMode = Literal["all", "r18"]
     IteamDict = NewType("Iteam", dict)
     IteamList = NewType("Iteam", list)
-    
+
     def __init__(self, config_filename: str = "config.json") -> None:
         super().__init__(config_filename)
+        QObject.__init__(self)
         self.session = requests.session()
-        self.mongodb = MongoDB("mongodb://yingxue:SunXinYang0306@47.94.110.64:27017/?directConnection=true&appName=mongosh")
+        self.mongodb = MongoDB(
+            "mongodb://yingxue:SunXinYang0306@47.94.110.64:27017/?directConnection=true&appName=mongosh")
         self.mongodb.connentCollection("spider", "pixiv")
         self.mongodb_lock = threading.Lock()
-        
-        self.__version_val = "dce12e1f9118277ca2839d13e317c59d7ae9ac6e"
-        
+
+        self.__version_val = "12bf979348f8a251a88224d94a7ba55705d943fe"
+
         self.__user_page_api = "https://www.pixiv.net/users/"  # 用户主页
         self.__get_user_all_works_api = "https://www.pixiv.net/ajax/user/{uid}/profile/all"  # 获取用户所有作品
         self.__get_user_works_api = "https://www.pixiv.net/ajax/user/{uid}/profile/illusts"  # 获取用户作品
-        
+
         self.__subpage_api = "https://www.pixiv.net/artworks/"  # 一个作品页面
         self.__follow_api = "https://www.pixiv.net/ajax/follow_latest/illust?"  # 动态(关注的人发布的作品分散杂乱的分布，按时间排布)
         self.__follow_users_api = "https://www.pixiv.net/ajax/user/{uid}/following"  # "关注" 页面接口
-        
+
         self.header["referer"] = "https://pixiv.net/"
         self.header["cookie"] = self.cookies_pools[0]
 
@@ -66,37 +72,43 @@ class Pixiv(BaseSpider):
             self.logger.error("Failed to get uid!")
             # self.follow_header["X-User-Id"] = "50341679"
         self.follow_header["referer"] = "https://www.pixiv.net/bookmark_new_illust_r18.php"
-        
+
         self.requests_failed_count = 0
 
         self.logger = Logger.get_logger(__class__.__name__)
-    
-    def requests_sub_page(self, url: str, 
-                          headers: dict | None=None, 
-                          params: dict | None=None) -> requests.Response | None:
+
+    def requests_sub_page(self, url: str,
+                          headers: dict | None = None,
+                          params: dict | None = None) -> requests.Response | None:
         """子页面请求
 
         :param str url:
+        :param headers:
+        :param params:
         :return requests.Response | None:
         """
         if self.requests_failed_count >= 4:
             sleep(10)
             self.requests_failed_count -= 1
         for i in range(5):
-            response = self.session.get(url, headers=headers or self.header, params=params)
+            header = headers or self.header
+            from pprint import pprint
+            pprint(header)
+            response = self.session.get(url, headers=header, params=params, timeout=5)
             if response.status_code == 200:
-                self.logger.debug(f"{url} status code: {response.status_code}")       
+                self.logger.debug(f"{url} status code: {response.status_code}")
                 return response
             else:
                 self.requests_failed_count += 1
                 if self.requests_failed_count >= 4:
                     sleep(10)
                     self.requests_failed_count -= 1
-                self.logger.warning(f"Requests Failed: {url} status code: {response.status_code}(count: {self.requests_failed_count})")
+                self.logger.warning(
+                    f"Requests Failed: {url} status code: {response.status_code}(count: {self.requests_failed_count})")
                 continue
         return None
 
-    def requests_follow_page(self, page: int, mode: FollowRequestsMode="r18") -> requests.Response | None:
+    def requests_follow_page(self, page: int, mode: FollowRequestsMode = "r18") -> requests.Response | None:
         """关注页面请求
 
         :param int page: 
@@ -112,8 +124,8 @@ class Pixiv(BaseSpider):
         }
         api += urllib.parse.urlencode(params)
         return self.requests_sub_page(url=api)  # TODO: ?? headers=self.follow_headers?
-        
-    def requests_follow_users_page(self, offset: int=0, limit: int=24) -> requests.Response:
+
+    def requests_follow_users_page(self, offset: int = 0, limit: int = 24) -> requests.Response:
         """请求关注的用户的列表
 
         :param int offset: 偏移量, defaults to 0
@@ -139,7 +151,7 @@ class Pixiv(BaseSpider):
         """
         api_url = self.__user_page_api + str(uid)
         return self.requests_sub_page(api_url)
-    
+
     def requests_get_user_works_api(self, uid: int | str) -> requests.Response:
         """请求-获取用户所有作品id接口
 
@@ -147,12 +159,13 @@ class Pixiv(BaseSpider):
         :return requests.Response:
         """
         api_url = self.__get_user_all_works_api.format(uid=str(uid))
+
         params = {
             "lang": "zh",
             "version": self.__version_val
         }
         return self.requests_sub_page(api_url, headers=self.follow_header, params=params)
-    
+
     def requests_user_works_api(self, uid: int | str, works_id: int | str) -> requests.Response:
         """请求-用户作品接口(弃用)
 
@@ -169,7 +182,6 @@ class Pixiv(BaseSpider):
         }
         return self.requests_sub_page(api, params=params)
 
-    
     def parse_sub_page(self, html: str, work_id: int | str) -> IteamDict:
         """works页面解析
 
@@ -200,7 +212,7 @@ class Pixiv(BaseSpider):
             "title": "NoTitle",
             "pageCount": 0,
             "userName": "NoUserName",
-            "tags": [], 
+            "tags": [],
             "description": ""
         }
         tree = etree.HTML(html)
@@ -216,7 +228,7 @@ class Pixiv(BaseSpider):
             result["userName"] = body["userName"]
             result["tags"] = [tag["tag"] for tag in body["tags"]["tags"]]
             result["description"] = body["description"] or body["illustComment"]
-            
+
             return result
         except KeyError as e:
             self.logger.error(e)
@@ -243,7 +255,7 @@ class Pixiv(BaseSpider):
             raise
 
         return result
-    
+
     def parse_follow_users_page(self, json_data: dict) -> IteamList:
         """解析"关注"页面
 
@@ -255,7 +267,7 @@ class Pixiv(BaseSpider):
         except Exception:
             self.logger.error("Failed: Json data can't parse!")
             raise
-    
+
     def parse_get_user_works_api(self, json_data: dict) -> IteamList:
         """解析-"获取用户所有作品id"api
 
@@ -292,8 +304,7 @@ class Pixiv(BaseSpider):
             self.logger.error(e)
             raise
 
-
-    def download_image(self, url: str, dir_name: str="NoDir", _filename: str=None) -> bool:
+    def download_image(self, url: str, dir_name: str = "NoDir", _filename: str = None) -> bool:
         """下载图片(会自动创建不存在路劲)
 
         :param str url: 
@@ -340,16 +351,33 @@ class Pixiv(BaseSpider):
         finally:
             self.mongodb_lock.release()
 
-
-    def spider_once_work_page(self, url_or_id: str | int) -> None:
+    def spider_once_work_page(self, url_or_id: str | int) -> tuple[bool, dict]:
         """爬取一次一个works(作品)页面
 
-        :param str url:
+        :param str url: url OR pid
+        :return dict: {
+            "userId": => str
+
+            "workId": => str
+
+            "start_url": 图片的开始url, => str
+
+            "title": -, => str
+
+            "pageCount: -  => int
+
+            "userName": , => str
+
+            "tags": , => list
+
+            "description": 描述 => str
+        }
         """
         url_or_id = str(url_or_id)
         url = urllib.parse.urljoin(self.__subpage_api, url=url_or_id)
         work_id = url.split("/")[-1]
-        
+        self.logger.info(f"开始爬取 {url} 页面...")
+
         try:
             int(work_id)
         except Exception:
@@ -359,9 +387,11 @@ class Pixiv(BaseSpider):
         response = self.requests_sub_page(url)
         if not response:
             self.logger.warning(f"{url} response is None!")
-            return
+            return False, {}
 
         result = self.parse_sub_page(response.text, work_id)  # 解析
+        _result = result.copy()
+
         image_url = result["start_url"]
         dir_name = os.sep.join([result["userName"], result["title"]])
         illustComment = result.get("illustComment", None) or ""  # TODO: 是否需要改???
@@ -384,7 +414,8 @@ class Pixiv(BaseSpider):
                     continue
                 sleep(0.5)
 
-            with open(os.sep.join([self.base_download_path, dir_name, "illustComment.txt"]), "w", encoding="utf-8") as file:
+            with open(os.sep.join([self.base_download_path, dir_name, "illustComment.txt"]), "w",
+                      encoding="utf-8") as file:
                 file.write(illustComment)
 
             # save to db
@@ -392,9 +423,9 @@ class Pixiv(BaseSpider):
             ThreadUtils.createAndRunThread(self.tmp_save, user_id, result["workId"], result)
         else:
             self.logger.info(f"Exists: {work_id}(workId)<==>{result['userId']}(userId)")
-        return
-    
-    def spider_once_follow_page(self, page: int, mode: FollowRequestsMode="r18") -> None:
+        return True, _result
+
+    def spider_once_follow_page(self, page: int, mode: FollowRequestsMode = "r18") -> None:
         """爬取一页关注页面
 
         :param int page: page
@@ -413,24 +444,31 @@ class Pixiv(BaseSpider):
 
         :param int | str uid: user id
         """
+        self.logger.info(f"开始爬取{uid}的作品...")
+
         response = self.requests_get_user_works_api(uid)
         all_works_id = self.parse_get_user_works_api(response.json())
         for work_id in all_works_id:
+            self.logger.info("发射信号")
+            Pixiv.get_user_workId_signal.emit(int(work_id))
             ThreadUtils.createAndRunThread(self.spider_once_work_page, str(work_id))
             sleep(3)
             # self.spider_once_work_page(work_id)
 
-    def spider_follow_page(self, mode: FollowRequestsMode="r18") -> None:
+    def spider_follow_page(self, mode: FollowRequestsMode = "r18") -> None:
         """爬取关注(动态?)页面(all in)
         
         :param FollowRequestsMode mode: 模式 => "all", "r18"
         """
+        self.logger.info("开始爬取动态页面...")
         for i in range(2, 100):
             self.spider_once_follow_page(i, mode=mode)
-    
+
     def spider_follow_users_page(self) -> None:
         """爬取所有的关注的用户的所有作品
         """
+        self.logger.info("开始爬取关注的所有用户的所有作品...")
+
         offset: int = 0
         limit: int = 24
         while True:
@@ -471,7 +509,7 @@ class Pixiv(BaseSpider):
                         self.logger.error(f"Failed: Save to MongoDB => {info['userId']}(userID)")
                 else:
                     self.logger.info(f"Exists: {info['userId']}(userID)")
-                
+
                 # by id to requests user page
                 self.spider_user_page(uid=uid)
                 # ThreadUtils.createAndRunThread(self.spider_user_page, uid)

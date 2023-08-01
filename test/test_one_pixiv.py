@@ -10,8 +10,11 @@
 
 import sys
 from pathlib import Path
-sys.path.append(str(Path.cwd()) + "\\src")
-from pixiv.pixiv import Pixiv
+import os
+obj_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(obj_path + os.sep + "src")
+# print(obj_path)
+from src.pixiv.pixiv import Pixiv
 import requests
 from pathlib import Path
 from lxml import etree
@@ -20,9 +23,10 @@ from time import sleep
 
 
 if __name__ == "__main__":
-    print(str(Path.cwd()))
+    # print(str(Path.cwd()))
 
-    p = Pixiv("config/config.json")
+    print(os.sep.join([obj_path, "config", "config.json"]))
+    p = Pixiv(os.sep.join([obj_path, "config", "config.json"]))
 
     response = requests.get("https://www.pixiv.net/artworks/109784861", headers=p.header)
     print(response.status_code)

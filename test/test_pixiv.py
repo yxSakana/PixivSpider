@@ -52,6 +52,6 @@ if __name__ == "__main__":
     # urls = [110003569, 110003424, 109999672, 109980396]
     # for url in urls:
     #     p.spider_once_work_page(url)
-    p.spider_follow_users_page()
+    p.spider_once_work_page("https://www.pixiv.net/artworks/110406347")
     
     # p.spider_follow_page()

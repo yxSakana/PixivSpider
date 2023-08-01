@@ -13,8 +13,10 @@ import requests
 from pathlib import Path
 from lxml import etree
 import json
+import sys
 
 
 if __name__ == "__main__":
-    # print(json.loads(preload_data))
-    pass
+    from pprint import pprint
+    # pprint(sys.path)
+    p = Pixiv()

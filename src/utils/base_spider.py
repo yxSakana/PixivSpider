@@ -6,14 +6,17 @@ from pathlib import Path
 import logging
 # from traceback import format_exc
 
+from PyQt5.QtCore import QObject
+
 from utils.logger import Logger
 
 USER_AGENT = {
     "google_chrome": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
 }
 
-class BaseSpider(ABC):
+class BaseSpider(QObject):
     def __init__(self, config_filename: str="config.json") -> None:
+        super().__init__()
         self.config_filename = config_filename
         self.header = {
             "User-Agent": USER_AGENT["google_chrome"]
