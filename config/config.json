@@ -1,0 +1,8 @@
+{
+    "spider": {
+        "website": "https://www.bilibili.com",
+        "base_path": "data/",
+        "base_download_path": "data/",
+        "cookies_pools": ["config/cookies.txt"]
+    }
+}
