@@ -104,7 +104,10 @@ class Pixiv(BaseSpider):
             self.requests_failed_count -= 1
         for i in range(5):
             header = headers or self.header
-            response = self.session.get(url, headers=header, params=params, timeout=5, proxies=self.proxies)
+            try:
+                response = self.session.get(url, headers=header, params=params, timeout=5, proxies=self.proxies)
+            except requests.exceptions.ReadTimeout:
+                self.logger.error(f"timeout => {url}")
             if response.status_code == 200:
                 self.logger.debug(f"{url} status code: {response.status_code}")
                 return response
@@ -327,7 +330,7 @@ class Pixiv(BaseSpider):
                 response = self.session.get(url, headers=self.header, timeout=5, proxies=self.proxies)
                 break
             except requests.exceptions.ConnectionError:
-                self.logger.warning(f"(Download) Requests Failed: {url} status code: {response.status_code}")
+                self.logger.warning(f"(Download) Requests Failed: {url}")
                 sleep(10)
 
         dir_name = os.path.normpath(os.path.sep.join([self.base_download_path, dir_name]))
