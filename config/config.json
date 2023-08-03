@@ -11,6 +11,8 @@
         "username": "",
         "password": "",
         "ip": "",
-        "port": ""
+        "port": "",
+        "db_name": "spider",
+        "collection": "pixiv"
     }
 }

@@ -49,7 +49,7 @@ class Pixiv(BaseSpider):
                        "@" + self.mongo_config["ip"] + ":" + self.mongo_config["port"] + \
                        "/?directConnection=true&appName=mongosh"
         self.mongodb = MongoDB(connect_info)
-        self.mongodb.connentCollection("spider", "pixiv")
+        self.mongodb.connentCollection(self.mongo_config["db_name"], self.mongo_config["collection"])
         self.mongodb_lock = threading.Lock()
 
         self.__version_val = "12bf979348f8a251a88224d94a7ba55705d943fe"
