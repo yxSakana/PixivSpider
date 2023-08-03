@@ -31,6 +31,5 @@ if __name__ == "__main__":
 
     pixiv_app = PixivApp()
     pixiv_app.login_ui.show()
-    pixiv_app.main_ui.show()
 
     app.exec_()
