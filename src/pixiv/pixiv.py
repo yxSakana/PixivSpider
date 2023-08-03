@@ -82,6 +82,12 @@ class Pixiv(BaseSpider):
     def reloadConfig(self) -> None:
         super().reloadConfig()
         self.header["cookie"] = self.cookies_pools[0]
+        try:
+            self.uid = re.findall("PHPSESSID=(\d+?)_", self.cookies_pools[0])[0]
+            self.follow_header["X-User-Id"] = self.uid
+            self.__follow_users_api = self.__follow_users_api.format(uid=self.uid)
+        except IndexError:
+            self.logger.error("Failed: get uid from cookies!")
 
     def requests_sub_page(self, url: str,
                           headers: dict | None = None,
