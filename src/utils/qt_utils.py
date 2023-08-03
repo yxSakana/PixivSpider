@@ -29,8 +29,24 @@ def initModel(data: dict, model: QStandardItemModel):
         if not val_item:
             val_item = QStandardItem()
             model.setItem(row, 1, val_item)
-        val_item.setText(val)
-    # 设置表格内容居中对齐
+        val_item.setText(str(val))
+        setTabelViewAlignCenter(model)
+
+
+def setTabelViewAlignCenter(model):
+    """
+    设置表格内容居中对齐
+    :param model:
+    :return:
+    """
     for row in range(model.rowCount()):
         for column in range(model.columnCount()):
             model.setData(model.index(row, column), Qt.AlignCenter, Qt.TextAlignmentRole)
+
+
+def addDataToItem(model, row, col, data):
+    item = model.item(row, col)
+    if not item:
+        item = QStandardItem()
+        model.setItem(row, col, item)
+    item.setText(str(data))

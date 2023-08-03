@@ -111,7 +111,6 @@ class Logger(object):
             } 
             self.log_config["loggers"][self.name]["handlers"] = ["fileHandler"]
 
-
     @staticmethod
     def get_module_name() -> str:
         """get current module name
@@ -122,7 +121,6 @@ class Logger(object):
         project_name = os.path.basename(current_dir)
         
         return project_name
-
 
     @staticmethod
     def get_logger(name: str, filename: str="") -> logging.Logger:
@@ -137,7 +135,6 @@ class Logger(object):
 
         return logger
 
-
     @staticmethod
     def get_module_logger() -> logging.Logger:
         """get logger by current mdule name create
@@ -147,3 +144,21 @@ class Logger(object):
         module_name = Logger.get_module_name()
 
         return Logger.get_logger(module_name)
+
+    @staticmethod
+    def set_level(logger, level: str):
+        if level.lower() == "debug":
+            logger.handlers[0].setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
+        elif level.lower() == "info":
+            logger.handlers[0].setLevel(logging.INFO)
+            logger.setLevel(logging.INFO)
+        elif level.lower() == "warring":
+            logger.handlers[0].setLevel(logging.WARNING)
+            logger.setLevel(logging.WARNING)
+        elif level.lower() == "error":
+            logger.handlers[0].setLevel(logging.ERROR)
+            logger.setLevel(logging.ERROR)
+        elif level.lower() == "critical":
+            logger.handlers[0].setLevel(logging.CRITICAL)
+            logger.setLevel(logging.CRITICAL)

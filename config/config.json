@@ -3,6 +3,8 @@
         "website": "https://www.bilibili.com",
         "base_path": "data/",
         "base_download_path": "data/",
-        "cookies_pools": ["config/cookies.txt"]
+        "cookies_pools": [
+            "/home/sxy/Object/python/spider/PixivSpider/config/cookies.txt"
+        ]
     }
 }

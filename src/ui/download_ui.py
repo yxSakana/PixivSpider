@@ -10,12 +10,11 @@
 
 import sys
 
-from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import \
     QApplication, QWidget, QTabWidget, \
-    QPushButton, QAction, QLineEdit, QLabel, QMessageBox, \
+    QPushButton, QRadioButton, QLineEdit, QLabel, QMessageBox, \
     QVBoxLayout, QHBoxLayout, \
-    QTableView, QHeaderView, QSizePolicy
+    QHeaderView, QSizePolicy
 from PyQt5.QtGui import QIcon
 
 from pixiv.pixiv import Pixiv
@@ -36,6 +35,7 @@ class PixivOnceWorksDownloadUi(QWidget):
         # url 输入
         self.url_label = QLabel("url(pid): ", self)
         self.url_edit = QLineEdit(self)
+        self.url_edit.setPlaceholderText("输入作品链接(或 id)")
         self.start_pb = QPushButton("Download", self)
         self.layout_1 = QHBoxLayout()
         self.layout_1.addWidget(self.url_label)
@@ -68,7 +68,12 @@ class PixivOnceWorksDownloadUi(QWidget):
             QMessageBox.warning(self, "Url Input Error", "输入为空!")
             return
 
-        self.pixiv.spider_once_work_page(url_or_id)
+        is_ok, result = self.pixiv.spider_once_work_page(url_or_id)
+        if is_ok:
+            from pprint import pprint
+            pprint(result)
+            initModel(result, self.model)
+            self.model_view.setModel(self.model)
 
     def loadEmptyModel(self):
         data = {
@@ -79,13 +84,17 @@ class PixivOnceWorksDownloadUi(QWidget):
             "pageCount": "",
             "userName": "",
             "tags": "",
-            "description": ""
+            "description": "",
         }
         initModel(data, self.model)
+        self.model.setHorizontalHeaderLabels(["key", "value"])
         self.model_view.setModel(self.model)
 
 
 class PixivUserWorksDownloadUi(QWidget):
+    """
+    用户
+    """
     def __init__(self, pixiv, parent: QWidget):
         super().__init__(parent)
 
@@ -96,6 +105,7 @@ class PixivUserWorksDownloadUi(QWidget):
         # url 输入
         self.url_label = QLabel("url(uid): ", self)
         self.url_edit = QLineEdit(self)
+        self.url_edit.setPlaceholderText("输入用户id(仅仅包含id)")
         self.start_pb = QPushButton("Download", self)
         self.layout_1 = QHBoxLayout()
         self.layout_1.addWidget(self.url_label)
@@ -105,6 +115,8 @@ class PixivUserWorksDownloadUi(QWidget):
         self.model_view = QTableView()
         self.model = QStandardItemModel()
         self.model.setColumnCount(2)
+        self.model.setHorizontalHeaderLabels(["key", "value"])
+        self.model_view.setModel(self.model)
         # 设置视图随窗口调节大小
         self.model_view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # 设置表头自适应大小
@@ -121,7 +133,7 @@ class PixivUserWorksDownloadUi(QWidget):
 
         # connect slot
         self.start_pb.clicked.connect(lambda: ThreadUtils.createAndRunThread(self.onStart))
-        self.pixiv.get_user_workId_signal.connect(lambda work_id: ThreadUtils.createAndRunThread(self.addItem, work_id))
+        self.pixiv.get_user_workId_signal.connect(self.addItem)
 
     def onStart(self):
         url_or_id = self.url_edit.text()
@@ -129,7 +141,7 @@ class PixivUserWorksDownloadUi(QWidget):
             QMessageBox.warning(self, "Url Input Error", "输入为空!")
             return
 
-        self.pixiv.spider_user_page(url_or_id)
+        self.pixiv.spider_user_works(url_or_id)
 
     def addItem(self, work_id: int):
         """
@@ -137,53 +149,116 @@ class PixivUserWorksDownloadUi(QWidget):
         :param work_id:
         :return:
         """
-        key_item = self.model.item(self.work_count, 0)
-        if not key_item:
-            key_item = QStandardItem()
-            self.model.setItem(self.work_count, 0, key_item)
-        key_item.setText("workId")
-
-        val_item = self.model.item(self.work_count, 1)
-        if not val_item:
-            val_item = QStandardItem()
-            self.model.setItem(self.work_count, 0, val_item)
-        val_item.setText(str(work_id))
-        # 设置表格内容居中对齐
-        for row in range(self.model.rowCount()):
-            for column in range(self.model.columnCount()):
-                self.model.setData(self.model.index(row, column), Qt.AlignCenter, Qt.TextAlignmentRole)
+        addDataToItem(self.model, self.work_count, 0, "workId")
+        addDataToItem(self.model, self.work_count, 1, work_id)
+        setTabelViewAlignCenter(model=self.model)
 
         self.model_view.setModel(self.model)
+        self.work_count += 1
+
+
+class PixivTrendsDownloadUi(QWidget):
+    """
+    动态
+    """
+    def __init__(self, pixiv: Pixiv, parent: QWidget | None = None):
+        super().__init__(parent)
+
+        self.pixiv = pixiv
+
+        # init Ui
+        self.all_mode = QRadioButton("all", self)
+        self.r18_mode = QRadioButton("r18", self)
+        self.r18_mode.click()
+        layout_1 = QHBoxLayout()
+        layout_1.addSpacing(250)
+        layout_1.addWidget(self.all_mode)
+        layout_1.addWidget(self.r18_mode)
+
+        self.start_pb = QPushButton("Start", self)
+
+        # 数据显示视图
+        self.model_view = QTableView()
+        self.model = QStandardItemModel()
+        self.model.setColumnCount(4)
+        self.model_count = 0
+        header = ["page", "workId", "url1", "url2"]
+        self.model.setHorizontalHeaderLabels(header)
+        self.model_view.setModel(self.model)
+        # 设置视图随窗口调节大小
+        self.model_view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # 设置表头自适应大小
+        self.model_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # 设置表格视图自适应大小
+        self.model_view.resizeColumnsToContents()
+        self.model_view.resizeRowsToContents()
+
+        # layout
+        self.layout = QVBoxLayout()
+        self.layout.addLayout(layout_1)
+        self.layout.addWidget(self.start_pb)
+        self.layout.addWidget(self.model_view)
+
+        self.setLayout(self.layout)
+
+        # slot connect
+        self.start_pb.clicked.connect(lambda: ThreadUtils.createAndRunThread(self.onStart))
+        self.pixiv.trends_info_signal.connect(self.addItem)
+
+    def onStart(self):
+        mode = "all" if self.all_mode.isChecked() else "r18"
+        self.pixiv.spider_trends_pages(mode)
+
+    def addItem(self, page: int, work_id: str, url_1: str, url_2: str):
+        addDataToItem(self.model, self.model_count, 0, page)
+        addDataToItem(self.model, self.model_count, 1, work_id)
+        addDataToItem(self.model, self.model_count, 2, url_1)
+        addDataToItem(self.model, self.model_count, 3, url_2)
+
+        setTabelViewAlignCenter(model=self.model)  # 居中
+
+        self.model_view.setModel(self.model)
+        self.model_count += 1
+
+
+class PixivFollowDownloadUi(QWidget):
+    def __init__(self, pixiv: Pixiv, parent: QWidget | None = None):
+        super().__init__()
+
+        self.pixiv = pixiv
+
+        # init Ui
+        self.start_pb = QPushButton("Start", self)
+
+        # layout
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.start_pb)
+        self.setLayout(self.layout)
+
+        # connect
+        self.start_pb.clicked.connect(lambda: ThreadUtils.createAndRunThread(self.onStart))
+
+    def onStart(self):
+        self.pixiv.spider_follow_users_works()
 
 
 class PixivDownloadUi(QWidget):
-    def __init__(self, parent: QWidget = None):
+    def __init__(self, pixiv: Pixiv, parent: QWidget = None):
         super().__init__(parent)
 
-        self.pixiv = Pixiv("config/config.json")
-
-        # init Action
-        self.download_once_work = QAction(QIcon(), "Download Once Work", self)
-        self.download_user_works = QAction(QIcon(), "Download User Works", self)
-        self.download_trends = QAction(QIcon(), "Download Trends", self)
-        self.download_follow_users_works = QAction(QIcon(), "Download Follow Users Works", self)
+        self.pixiv = pixiv
 
         # init Ui
         self.top_tool_bar = QTabWidget(self)
         once_work_widget = PixivOnceWorksDownloadUi(pixiv=self.pixiv, parent=self)
         user_works_download_ui = PixivUserWorksDownloadUi(self.pixiv, self)
+        trends_download_ui = PixivTrendsDownloadUi(self.pixiv, self)
+        follow_download_ui = PixivFollowDownloadUi(self.pixiv, self)
         self.top_tool_bar.addTab(once_work_widget, QIcon("resource/fill.png"), "单个作品")
-        self.top_tool_bar.addTab(user_works_download_ui, QIcon("resource/多素材.png"), "用户的所有作品")
+        self.top_tool_bar.addTab(user_works_download_ui, QIcon("resource/User.png"), "用户")
+        self.top_tool_bar.addTab(trends_download_ui, QIcon("resource/Trends.png"), "动态")
+        self.top_tool_bar.addTab(follow_download_ui, QIcon("resource/Follow.png"), "关注")
 
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.top_tool_bar)
         self.setLayout(self.layout)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    p = PixivDownloadUi()
-    p.show()
-
-    app.exec_()

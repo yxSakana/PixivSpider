@@ -6,17 +6,31 @@
  @data: 2023-07-16 20:09:07
  @update: 2023-07-16 20:09:07
 """
+import sys
 
+from PyQt5.QtCore import QObject
+from PyQt5.QtWidgets import QApplication
 
 from pixiv.pixiv import Pixiv
-import requests
-from pathlib import Path
-from lxml import etree
-import json
-import sys
+from ui.login_ui import PixivLogin
+from ui.main_ui import PixivMainUi
+
+
+class PixivApp(QObject):
+    def __init__(self, config_filename: str = "config/config.json", parent: QObject | None = None):
+        super().__init__(parent)
+        self.pixiv = Pixiv(config_filename)
+        self.login_ui = PixivLogin(self.pixiv)
+        self.main_ui = PixivMainUi(self.pixiv)
+
+        self.login_ui.login_signal.connect(lambda: self.main_ui.show)
 
 
 if __name__ == "__main__":
-    from pprint import pprint
-    # pprint(sys.path)
-    p = Pixiv()
+    app = QApplication(sys.argv)
+
+    pixiv_app = PixivApp()
+    pixiv_app.login_ui.show()
+    pixiv_app.main_ui.show()
+
+    app.exec_()

@@ -28,6 +28,12 @@ class MongoDB(object):
             self.logger.error("connent tiemout!")
 
     def connentCollection(self, db_name: str, collection_name: str) -> None:
+        """
+
+        :param db_name:
+        :param collection_name:
+        :return:
+        """
         self.db = self.client[db_name]
         self.collection = self.db[collection_name]
 

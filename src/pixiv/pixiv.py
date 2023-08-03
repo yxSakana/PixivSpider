@@ -12,10 +12,8 @@
  @data: 2023-07-16 19:55:15
  @update: 2023-07-16 19:55:15
 """
-
 import os
 import re
-import sys
 import json
 import threading
 from time import sleep
@@ -36,6 +34,7 @@ from utils.mongodb import MongoDB
 class Pixiv(BaseSpider):
     # signal
     get_user_workId_signal = pyqtSignal(int)
+    trends_info_signal = pyqtSignal(int, str, str, str)
     # data model
     FollowRequestsMode = Literal["all", "r18"]
     IteamDict = NewType("Iteam", dict)
@@ -63,13 +62,18 @@ class Pixiv(BaseSpider):
         self.header["referer"] = "https://pixiv.net/"
         self.header["cookie"] = self.cookies_pools[0]
 
+        self.proxies = {
+            "http": "127.0.0.1:7890",
+            "https": "127.0.0.1:7890"
+        }
+
         self.follow_header = self.header.copy()
         try:
             self.uid = re.findall("PHPSESSID=(\d+?)_", self.cookies_pools[0])[0]
             self.follow_header["X-User-Id"] = self.uid
             self.__follow_users_api = self.__follow_users_api.format(uid=self.uid)
         except IndexError:
-            self.logger.error("Failed to get uid!")
+            self.logger.error("Failed: get uid from cookies!")
             # self.follow_header["X-User-Id"] = "50341679"
         self.follow_header["referer"] = "https://www.pixiv.net/bookmark_new_illust_r18.php"
 
@@ -92,9 +96,7 @@ class Pixiv(BaseSpider):
             self.requests_failed_count -= 1
         for i in range(5):
             header = headers or self.header
-            from pprint import pprint
-            pprint(header)
-            response = self.session.get(url, headers=header, params=params, timeout=5)
+            response = self.session.get(url, headers=header, params=params, timeout=5, proxies=self.proxies)
             if response.status_code == 200:
                 self.logger.debug(f"{url} status code: {response.status_code}")
                 return response
@@ -305,7 +307,7 @@ class Pixiv(BaseSpider):
             raise
 
     def download_image(self, url: str, dir_name: str = "NoDir", _filename: str = None) -> bool:
-        """下载图片(会自动创建不存在路劲)
+        """下载图片(会自动创建不存在路径)
 
         :param str url: 
         :param str dir_name: , defaults to "NoDir"
@@ -314,17 +316,19 @@ class Pixiv(BaseSpider):
         """
         for i in range(5):
             try:
-                response = self.session.get(url, headers=self.header)
+                response = self.session.get(url, headers=self.header, timeout=5, proxies=self.proxies)
                 break
             except requests.exceptions.ConnectionError:
+                self.logger.warning(f"(Download) Requests Failed: {url} status code: {response.status_code}")
                 sleep(10)
 
         dir_name = os.path.normpath(os.path.sep.join([self.base_download_path, dir_name]))
+        self.logger.info(f"(Download) {dir_name}")
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
 
         if response.status_code == 200:
-            self.logger.debug(f"{url} status code: {response.status_code}")
+            self.logger.debug(f"(Download) {url} status code: {response.status_code}")
             data = response.content
             filename = os.path.sep.join([dir_name, _filename or url.split("/")[-1]])
             self.logger.debug(f"download dir: {dir_name}")
@@ -343,7 +347,7 @@ class Pixiv(BaseSpider):
         try:
             filter = {"userId": user_id}
             update = {"$push": {"works": {work_id: info}}}
-            save_result = self.mongodb.collection.update_one(filter, update)
+            save_result = self.mongodb.collection.update_one(filter, update, upsert=True)
             if save_result.matched_count == 0:
                 self.logger.error(f"Matched count: {save_result.matched_count}")
             else:
@@ -381,7 +385,11 @@ class Pixiv(BaseSpider):
         try:
             int(work_id)
         except Exception:
-            self.logger.error("Failed to get page id!")
+            self.logger.error(f"Failed to get page id!: \n"
+                              f"int(work_id) failed => work_id: \n"
+                              f"\tval: {work_id}, "
+                              f"\ttype: {type(work_id)}")
+            self.logger.error()
             raise
 
         response = self.requests_sub_page(url)
@@ -390,17 +398,21 @@ class Pixiv(BaseSpider):
             return False, {}
 
         result = self.parse_sub_page(response.text, work_id)  # 解析
-        _result = result.copy()
+        _result = {}
 
         image_url = result["start_url"]
         dir_name = os.sep.join([result["userName"], result["title"]])
         illustComment = result.get("illustComment", None) or ""  # TODO: 是否需要改???
 
         query = {"userId": result['userId'], "works": {"$elemMatch": {work_id: {"$exists": True}}}}
-        if self.mongodb.collection.find_one(query) is None:  # TODO
+        db_exist_result = self.mongodb.collection.find_one(query)
+        if db_exist_result is None:
+            self.logger.info(f"No Exists: {image_url}")
             result["image_urls"] = []
+
             for i in range(result["pageCount"]):
                 result["image_urls"].append(image_url)
+                self.logger.info(result["image_urls"])
                 self.download_image(image_url, dir_name)
                 try:
                     index = int(re.findall("p(\d+)[_\.]", image_url)[0])
@@ -417,16 +429,19 @@ class Pixiv(BaseSpider):
             with open(os.sep.join([self.base_download_path, dir_name, "illustComment.txt"]), "w",
                       encoding="utf-8") as file:
                 file.write(illustComment)
+            _result = result.copy()
 
             # save to db
             user_id = str(result.pop("userId"))
             ThreadUtils.createAndRunThread(self.tmp_save, user_id, result["workId"], result)
         else:
+            _result = list((_data for _data in db_exist_result["works"] if work_id in _data))[0][work_id]
+            _result["userId"] = db_exist_result["userId"]
             self.logger.info(f"Exists: {work_id}(workId)<==>{result['userId']}(userId)")
         return True, _result
 
-    def spider_once_follow_page(self, page: int, mode: FollowRequestsMode = "r18") -> None:
-        """爬取一页关注页面
+    def spider_once_trends_page(self, page: int, mode: FollowRequestsMode = "r18") -> None:
+        """爬取一页关注(动态)页面
 
         :param int page: page
         :param FollowRequestsMode mode: 模式 => "all", "r18"
@@ -435,36 +450,37 @@ class Pixiv(BaseSpider):
         image_info_arr = self.parse_follow_page(response.json())
         for i in range(len(image_info_arr["ids"])):
             sub_page_url = self.__subpage_api + str(image_info_arr["ids"][i])
+            self.trends_info_signal.emit(page, str(image_info_arr["ids"][i]), image_info_arr["urls"][i], sub_page_url)  # 发送信号
             self.logger.debug(f"Current spider sub page url: {sub_page_url})({i})")
-            ThreadUtils.createAndRunThread(self.spider_once_work_page, (str(sub_page_url), mode))
+            ThreadUtils.createAndRunThread(self.spider_once_work_page, str(sub_page_url))
             sleep(3)
 
-    def spider_user_page(self, uid: int | str) -> None:
+    def spider_user_works(self, uid_or_url: int | str) -> None:
         """爬取用户all works
 
         :param int | str uid: user id
         """
+        uid = uid_or_url.split("/")[-1]
         self.logger.info(f"开始爬取{uid}的作品...")
 
         response = self.requests_get_user_works_api(uid)
         all_works_id = self.parse_get_user_works_api(response.json())
         for work_id in all_works_id:
-            self.logger.info("发射信号")
-            Pixiv.get_user_workId_signal.emit(int(work_id))
+            self.get_user_workId_signal.emit(int(work_id))
             ThreadUtils.createAndRunThread(self.spider_once_work_page, str(work_id))
             sleep(3)
             # self.spider_once_work_page(work_id)
 
-    def spider_follow_page(self, mode: FollowRequestsMode = "r18") -> None:
+    def spider_trends_pages(self, mode: FollowRequestsMode = "r18") -> None:
         """爬取关注(动态?)页面(all in)
         
         :param FollowRequestsMode mode: 模式 => "all", "r18"
         """
         self.logger.info("开始爬取动态页面...")
-        for i in range(2, 100):
-            self.spider_once_follow_page(i, mode=mode)
+        for i in range(1, 100):  # TODO: 把固定的100页改的更合理
+            self.spider_once_trends_page(i, mode=mode)
 
-    def spider_follow_users_page(self) -> None:
+    def spider_follow_users_works(self) -> None:
         """爬取所有的关注的用户的所有作品
         """
         self.logger.info("开始爬取关注的所有用户的所有作品...")
@@ -475,12 +491,12 @@ class Pixiv(BaseSpider):
             response = self.requests_follow_users_page(offset, limit)
             data = self.parse_follow_users_page(response.json())
             for i in range(len(data)):
-                iteam = data[i]
+                item = data[i]
 
                 try:
-                    dir_name = os.path.normpath(iteam["userName"])
-                    image_url = iteam["profileImageUrl"]
-                    uid = iteam["userId"]
+                    dir_name = os.path.normpath(item["userName"])
+                    image_url = item["profileImageUrl"]
+                    uid = item["userId"]
                 except KeyError as e:
                     self.logger.error(e)
 
@@ -489,10 +505,10 @@ class Pixiv(BaseSpider):
                 # write user info
                 info = {
                     "userId": uid,
-                    "userName": iteam["userName"],
+                    "userName": item["userName"],
                     "image_url": image_url,
-                    "userComment": iteam["userComment"],
-                    "tags": [illust["tags"] for illust in iteam["illusts"]]
+                    "userComment": item["userComment"],
+                    "tags": [illust["tags"] for illust in item["illusts"]]
                 }
                 filename = os.sep.join([self.base_download_path, dir_name, "info.json"])
                 self.logger.debug(filename)
@@ -511,5 +527,5 @@ class Pixiv(BaseSpider):
                     self.logger.info(f"Exists: {info['userId']}(userID)")
 
                 # by id to requests user page
-                self.spider_user_page(uid=uid)
+                self.spider_user_works(uid=uid)
                 # ThreadUtils.createAndRunThread(self.spider_user_page, uid)

@@ -14,6 +14,7 @@ USER_AGENT = {
     "google_chrome": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
 }
 
+
 class BaseSpider(QObject):
     def __init__(self, config_filename: str="config.json") -> None:
         super().__init__()
@@ -24,26 +25,36 @@ class BaseSpider(QObject):
         self.website = ""
         self.base_path = ""
         self.base_download_path = ""
-        self.cookies_pools = []
+        self.cookies_pools = []  # 存储的是cookies的具体内容(配置文件中指定的是文件名)
+        self.cookies_filenames = []
 
         self.logger = Logger.get_logger(self.__class__.__name__)
 
         self.readConfig()
 
+    def reloadConfig(self) -> None:
+        """
+        重新读取配置文件
+        :return:
+        """
+        self.readConfig()
+
     def readConfig(self) -> None:
         """读取配置文件
+
+        加载 website、base_path、base_download_path、cookies_pools
         """
         try:
             config_data = json.loads(self.openFile(self.config_filename))
             self.website = config_data["spider"]["website"]
             self.base_path = Path(config_data["spider"]["base_path"]).resolve()
             self.base_download_path = Path(config_data["spider"]["base_download_path"]).resolve()
-            cookie_filenames = config_data["spider"]["cookies_pools"]
+            self.cookies_filenames = config_data["spider"]["cookies_pools"]
         except KeyError as e:
             self.logger.error("Key Error: %s", e)
             sys.exit(1)
         # 读取cookie池
-        for filename in cookie_filenames:
+        for filename in self.cookies_filenames:
             cookie = self.openFile(filename)
             self.cookies_pools.append(cookie)
         # 检测路径是否存在
