@@ -84,6 +84,10 @@ class Pixiv(BaseSpider):
 
         self.logger = Logger.get_logger(__class__.__name__)
 
+    def reloadConfig(self) -> None:
+        super().reloadConfig()
+        self.header["cookie"] = self.cookies_pools[0]
+
     def requests_sub_page(self, url: str,
                           headers: dict | None = None,
                           params: dict | None = None) -> requests.Response | None:

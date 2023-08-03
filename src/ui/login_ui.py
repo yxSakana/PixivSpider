@@ -38,7 +38,7 @@ class PixivLogin(QWidget):
         self.edit_pwd = QLineEdit(self)
         self.edit_pwd.setPlaceholderText("输入密码")
 
-        self.start_pb = QPushButton("login", self)
+        self.login_pb = QPushButton("login", self)
 
         # 布局
         form_layout = QFormLayout()
@@ -49,24 +49,27 @@ class PixivLogin(QWidget):
         form_layout.addRow(name_label_pwd, self.edit_pwd)
         layout = QVBoxLayout()
         layout.addLayout(form_layout)
-        layout.addWidget(self.start_pb)
+        layout.addWidget(self.login_pb)
         self.setLayout(layout)
 
         # sign slot connect
-        self.start_pb.clicked.connect(lambda: ThreadUtils.createAndRunThread(self.onLogin))
+        self.login_pb.clicked.connect(lambda: ThreadUtils.createAndRunThread(self.onLogin))
 
     def onLogin(self):
+        self.login_pb.setText("logging in")
+        self.login_pb.setEnabled(False)
         username = self.edit_username.text()
         pwd = self.edit_pwd.text()
-        if not username | pwd:
+        if not (username or pwd):
             QMessageBox.warning(self, "Error", "username OR password 为空")
+            self.login_pb.setEnabled(True)
             return
 
         cookies = self.login_script.login(username, pwd)
         if cookies:
             with open(self.pixiv.cookies_filenames[0], "w") as file:
                 file.write(cookies)
-            self.close()
             self.login_signal.emit()
+            self.hide()
         else:
             QMessageBox.warning(self, "Error", "用户名或密码错误!")

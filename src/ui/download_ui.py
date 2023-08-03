@@ -70,8 +70,6 @@ class PixivOnceWorksDownloadUi(QWidget):
 
         is_ok, result = self.pixiv.spider_once_work_page(url_or_id)
         if is_ok:
-            from pprint import pprint
-            pprint(result)
             initModel(result, self.model)
             self.model_view.setModel(self.model)
 

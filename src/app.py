@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
- @file: src\main.py
+ @file: src/main.py
  @Description: 
  @author: sxy
  @data: 2023-07-16 20:09:07
@@ -23,7 +23,11 @@ class PixivApp(QObject):
         self.login_ui = PixivLogin(self.pixiv)
         self.main_ui = PixivMainUi(self.pixiv)
 
-        self.login_ui.login_signal.connect(lambda: self.main_ui.show)
+        self.login_ui.login_signal.connect(self.logged)
+
+    def logged(self):
+        self.main_ui.show()
+        self.pixiv.reloadConfig()
 
 
 if __name__ == "__main__":
