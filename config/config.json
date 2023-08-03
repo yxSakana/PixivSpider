@@ -5,7 +5,11 @@
         "base_download_path": "data/",
         "cookies_pools": [
             "config/cookies.txt"
-        ]
+        ],
+        "proxies": {
+            "http": "127.0.0.1:7890",
+            "https": "127.0.0.1:7890"
+        }
     },
     "mongo": {
         "username": "",
@@ -13,6 +17,6 @@
         "ip": "",
         "port": "",
         "db_name": "spider",
-        "collection": "pixiv"
+        "collection": ""
     }
 }

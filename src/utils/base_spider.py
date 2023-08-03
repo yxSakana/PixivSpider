@@ -28,6 +28,7 @@ class BaseSpider(QObject):
         self.cookies_pools = []  # 存储的是cookies的具体内容(配置文件中指定的是文件名)
         self.cookies_filenames = []
         self.mongo_config = {}
+        self.proxies = {}
 
         self.logger = Logger.get_logger(self.__class__.__name__)
 
@@ -51,6 +52,7 @@ class BaseSpider(QObject):
             self.base_path = Path(config_data["spider"]["base_path"]).resolve()
             self.base_download_path = Path(config_data["spider"]["base_download_path"]).resolve()
             self.cookies_filenames = config_data["spider"]["cookies_pools"]
+            self.proxies = config_data["spider"]["proxies"]
         except KeyError as e:
             self.logger.error("Key Error: %s", e)
             sys.exit(1)

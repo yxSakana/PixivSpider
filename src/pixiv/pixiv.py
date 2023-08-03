@@ -65,11 +65,6 @@ class Pixiv(BaseSpider):
         self.header["referer"] = "https://pixiv.net/"
         self.header["cookie"] = self.cookies_pools[0]
 
-        self.proxies = {
-            "http": "127.0.0.1:7890",
-            "https": "127.0.0.1:7890"
-        }
-
         self.follow_header = self.header.copy()
         try:
             self.uid = re.findall("PHPSESSID=(\d+?)_", self.cookies_pools[0])[0]
