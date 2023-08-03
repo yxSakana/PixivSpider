@@ -27,6 +27,7 @@ class BaseSpider(QObject):
         self.base_download_path = ""
         self.cookies_pools = []  # 存储的是cookies的具体内容(配置文件中指定的是文件名)
         self.cookies_filenames = []
+        self.mongo_config = {}
 
         self.logger = Logger.get_logger(self.__class__.__name__)
 
@@ -64,6 +65,9 @@ class BaseSpider(QObject):
         self.base_path = str(self.base_path)
         self.base_download_path = str(self.base_download_path)
 
+        # mongo db
+        self.mongo_config = config_data["mongo"]
+
     def openFile(self, filename: str, mode: str="r", encoding: str="utf-8") -> any:
         """打开文件
 
@@ -90,28 +94,3 @@ class BaseSpider(QObject):
         self.logger.info(self.base_path)
         self.logger.info(self.base_download_path)
         self.logger.info(self.cookies_pools)
-
-        
-
-if __name__ == "__main__":
-    class T(BaseSpider):
-        def __init__(self, config_filename: str = "new_\\config.json") -> None:
-            super().__init__(config_filename)
-    
-    t = T()
-    # t.logger.handlers[0].setLevel(logging.DEBUG)
-    # t.logger.setLevel(logging.DEBUG)
-    # t.toString()
-
-    # root_logger = logging.getLogger("root")
-    # root_logger.info("asd")
-    # logging.root.info("i")
-    # # 获取所有的 Logger 对象
-    # loggers = logging.Logger.manager.loggerDict
-
-    # # 打印 Logger 的数量
-    # print("Number of loggers:", len(loggers))
-
-    # # 遍历打印每个 Logger 的名称
-    # for logger_name in loggers:
-    #     print("Logger name:", logger_name)

@@ -6,5 +6,11 @@
         "cookies_pools": [
             "config/cookies.txt"
         ]
+    },
+    "mongo": {
+        "username": "",
+        "password": "",
+        "ip": "",
+        "port": ""
     }
 }

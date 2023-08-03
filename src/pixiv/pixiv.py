@@ -44,8 +44,11 @@ class Pixiv(BaseSpider):
         super().__init__(config_filename)
         QObject.__init__(self)
         self.session = requests.session()
-        self.mongodb = MongoDB(
-            "mongodb://yingxue:SunXinYang0306@47.94.110.64:27017/?directConnection=true&appName=mongosh")
+        connect_info = "mongodb://" + self.mongo_config["username"] + \
+                       ":" + self.mongo_config["password"] + \
+                       "@" + self.mongo_config["ip"] + ":" + self.mongo_config["port"] + \
+                       "/?directConnection=true&appName=mongosh"
+        self.mongodb = MongoDB(connect_info)
         self.mongodb.connentCollection("spider", "pixiv")
         self.mongodb_lock = threading.Lock()
 
@@ -450,7 +453,8 @@ class Pixiv(BaseSpider):
         image_info_arr = self.parse_follow_page(response.json())
         for i in range(len(image_info_arr["ids"])):
             sub_page_url = self.__subpage_api + str(image_info_arr["ids"][i])
-            self.trends_info_signal.emit(page, str(image_info_arr["ids"][i]), image_info_arr["urls"][i], sub_page_url)  # 发送信号
+            self.trends_info_signal.emit(page, str(image_info_arr["ids"][i]), image_info_arr["urls"][i],
+                                         sub_page_url)  # 发送信号
             self.logger.debug(f"Current spider sub page url: {sub_page_url})({i})")
             ThreadUtils.createAndRunThread(self.spider_once_work_page, str(sub_page_url))
             sleep(3)

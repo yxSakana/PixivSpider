@@ -39,10 +39,3 @@ class MongoDB(object):
 
     def isExists(self, filter: dict) -> bool:
         return bool(self.collection.find_one(filter))
-
-
-if __name__ == "__main__":
-    # db = MongoDB("localhost")
-    # db = MongoDB("mongodb://yingxue:SunXinYang0306@47.94.110.64:27017/?directConnection=true&appName=mongosh")
-    db = MongoDB("47.94.110.6", 27017, "yingxue", "SunXinYang0306")
-    db.connentCollection("a", "b")
