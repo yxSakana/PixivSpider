@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
- @file: src/pixiv/pixiv.py
+ @file: pixiv.py
  @Description: 
 
     单个作品             √
@@ -106,18 +106,25 @@ class Pixiv(BaseSpider):
             header = headers or self.header
             try:
                 response = self.session.get(url, headers=header, params=params, timeout=5, proxies=self.proxies)
+                if response.status_code == 200:
+                    self.logger.debug(f"{url} status code: {response.status_code}")
+                    return response
+                else:
+                    self.requests_failed_count += 1
+                    if self.requests_failed_count >= 4:
+                        sleep(10)
+                        self.requests_failed_count -= 1
+                    self.logger.warning(
+                        f"Requests Failed: {url} status code: {response.status_code}(count: {self.requests_failed_count})")
+                    continue
             except requests.exceptions.ReadTimeout:
                 self.logger.error(f"timeout => {url}")
-            if response.status_code == 200:
-                self.logger.debug(f"{url} status code: {response.status_code}")
-                return response
-            else:
                 self.requests_failed_count += 1
                 if self.requests_failed_count >= 4:
                     sleep(10)
                     self.requests_failed_count -= 1
                 self.logger.warning(
-                    f"Requests Failed: {url} status code: {response.status_code}(count: {self.requests_failed_count})")
+                    f"Requests Failed: {url}{self.requests_failed_count})")
                 continue
         return None
 

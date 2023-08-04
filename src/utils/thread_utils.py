@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
- @file: src\\utils\\thread_utils.py
+ @file: thread_utils.py
  @Description: 
  @author: sxy
  @data: 2023-07-17 09:52:13

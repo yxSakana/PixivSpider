@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
- @file: src/ui/download_ui.py
+ @file: download_ui.py
  @Description: 
  @author: sxy
  @data: 2023-08-01 14:28:46
