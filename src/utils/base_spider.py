@@ -1,12 +1,15 @@
 import sys
 import json
-from abc import ABC
 from os import makedirs
 from pathlib import Path
-import logging
+# import logging
 # from traceback import format_exc
-
-from PyQt5.QtCore import QObject
+try:
+    from PyQt5.QtCore import QObject
+    meta_class = QObject
+except ModuleNotFoundError:
+    from abc import ABC
+    meta_class = ABC
 
 from utils.logger import Logger
 
@@ -15,8 +18,8 @@ USER_AGENT = {
 }
 
 
-class BaseSpider(QObject):
-    def __init__(self, config_filename: str="config.json") -> None:
+class BaseSpider(meta_class):
+    def __init__(self, config_filename: str = "config/config.json") -> None:
         super().__init__()
         self.config_filename = config_filename
         self.header = {
@@ -88,12 +91,12 @@ class BaseSpider(QObject):
             sys.exit(1)
 
     def toString(self):
-        self.logger.debug(self.website)
-        self.logger.debug(self.base_path)
-        self.logger.debug(self.base_download_path)
-        self.logger.debug(self.cookies_pools)
-
+        self.logger.info(self.config_filename)
+        self.logger.info(self.config_json)
         self.logger.info(self.website)
         self.logger.info(self.base_path)
         self.logger.info(self.base_download_path)
         self.logger.info(self.cookies_pools)
+        self.logger.info(self.cookies_filenames)
+        self.logger.info(self.proxies)
+        self.logger.info(self.header)
