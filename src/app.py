@@ -29,11 +29,21 @@ class PixivApp(QObject):
         self.main_ui.show()
         self.pixiv.reloadConfig()
 
+    def app(self):
+        if self.pixiv.config_json["logged"] and self.pixiv.cookies_pools[0]:
+            self.main_ui.show()
+        else:
+            self.login_ui.show()
+            with open(self.pixiv.config_filename, "w") as f:
+                self.pixiv.config_json["logged"] = "false"
+                f.write(self.pixiv.config_json)
+                self.pixiv.reloadConfig()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     pixiv_app = PixivApp()
-    pixiv_app.login_ui.show()
+    pixiv_app.app()
 
     app.exec_()

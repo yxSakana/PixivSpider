@@ -18,8 +18,8 @@ class Login(object):
         options.add_argument("--disable-popup-blocking")  # 禁止弹出窗口拦截功能
         options.add_argument("--disable-extensions")  # 禁止网页拓展
         options.add_argument("--start-maximized")  # 最大化
-        # options.add_argument("--headless")  # 无界面
-        # options.add_argument("--disable-gpu")  # 禁止GPU加速
+        options.add_argument("--headless")  # 无界面
+        options.add_argument("--disable-gpu")  # 禁止GPU加速
         self.driver = webdriver.Chrome(options)
 
     def login(self, username: str, passwd: str) -> str:
@@ -45,7 +45,7 @@ class Login(object):
             cookies_list = self.driver.get_cookies()
             cookies = ""
             for cookie in cookies_list:
-                cookies += cookie["name"] + " = " + cookie["value"] + ";"
+                cookies += cookie["name"] + "=" + cookie["value"] + ";"
             cookies = cookies[:-1]
             self.driver.quit()
             return cookies

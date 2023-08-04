@@ -29,6 +29,7 @@ class BaseSpider(QObject):
         self.cookies_filenames = []
         self.mongo_config = {}
         self.proxies = {}
+        self.config_json = {}  # JSON配置文件
 
         self.logger = Logger.get_logger(self.__class__.__name__)
 
@@ -47,12 +48,12 @@ class BaseSpider(QObject):
         加载 website、base_path、base_download_path、cookies_pools
         """
         try:
-            config_data = json.loads(self.openFile(self.config_filename))
-            self.website = config_data["spider"]["website"]
-            self.base_path = Path(config_data["spider"]["base_path"]).resolve()
-            self.base_download_path = Path(config_data["spider"]["base_download_path"]).resolve()
-            self.cookies_filenames = config_data["spider"]["cookies_pools"]
-            self.proxies = config_data["spider"]["proxies"]
+            self.config_json = json.loads(self.openFile(self.config_filename))
+            self.website = self.config_json["spider"]["website"]
+            self.base_path = Path(self.config_json["spider"]["base_path"]).resolve()
+            self.base_download_path = Path(self.config_json["spider"]["base_download_path"]).resolve()
+            self.cookies_filenames = self.config_json["spider"]["cookies_pools"]
+            self.proxies = self.config_json["spider"]["proxies"]
         except KeyError as e:
             self.logger.error("Key Error: %s", e)
             sys.exit(1)
@@ -68,7 +69,7 @@ class BaseSpider(QObject):
         self.base_download_path = str(self.base_download_path)
 
         # mongo db
-        self.mongo_config = config_data["mongo"]
+        self.mongo_config = self.config_json["mongo"]
 
     def openFile(self, filename: str, mode: str="r", encoding: str="utf-8") -> any:
         """打开文件

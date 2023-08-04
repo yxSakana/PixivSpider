@@ -40,6 +40,13 @@ class Pixiv(BaseSpider):
     IteamDict = NewType("Iteam", dict)
     IteamList = NewType("Iteam", list)
 
+    # Count
+    SUCCESS_COUNT = 0
+    FAILED_COUNT = 0
+    DOWNLOAD_COUNT = 0
+    DB_SAVED_COUNT = 0
+    DB_EXIST_COUNT = 0
+
     def __init__(self, config_filename: str = "config.json") -> None:
         super().__init__(config_filename)
         QObject.__init__(self)
@@ -107,9 +114,13 @@ class Pixiv(BaseSpider):
             try:
                 response = self.session.get(url, headers=header, params=params, timeout=5, proxies=self.proxies)
                 if response.status_code == 200:
+                    Pixiv.SUCCESS_COUNT += 1
+
                     self.logger.debug(f"{url} status code: {response.status_code}")
                     return response
                 else:
+                    Pixiv.FAILED_COUNT += 1
+
                     self.requests_failed_count += 1
                     if self.requests_failed_count >= 4:
                         sleep(10)
@@ -118,6 +129,8 @@ class Pixiv(BaseSpider):
                         f"Requests Failed: {url} status code: {response.status_code}(count: {self.requests_failed_count})")
                     continue
             except requests.exceptions.ReadTimeout:
+                Pixiv.FAILED_COUNT += 1
+
                 self.logger.error(f"timeout => {url}")
                 self.requests_failed_count += 1
                 if self.requests_failed_count >= 4:
@@ -279,7 +292,7 @@ class Pixiv(BaseSpider):
     def parse_follow_users_page(self, json_data: dict) -> IteamList:
         """解析"关注"页面
 
-        :param str json_text: response.text
+        :param str json_data: response.text
         :return IteamList: 用户列表
         """
         try:
@@ -346,6 +359,8 @@ class Pixiv(BaseSpider):
             os.makedirs(dir_name)
 
         if response.status_code == 200:
+            Pixiv.SUCCESS_COUNT += 1
+
             self.logger.debug(f"(Download) {url} status code: {response.status_code}")
             data = response.content
             filename = os.path.sep.join([dir_name, _filename or url.split("/")[-1]])
@@ -353,8 +368,11 @@ class Pixiv(BaseSpider):
             with open(filename, "wb") as file:
                 self.logger.debug(f"downloading: {filename}")
                 file.write(data)
+                Pixiv.DOWNLOAD_COUNT += 1
             return True
         else:
+            Pixiv.FAILED_COUNT += 1
+
             self.logger.warning(f"Requests Failed: {url} status code: {response.status_code}")
             self.requests_failed_count += 1
             return False
@@ -369,6 +387,7 @@ class Pixiv(BaseSpider):
             if save_result.matched_count == 0:
                 self.logger.error(f"Matched count: {save_result.matched_count}")
             else:
+                Pixiv.DB_SAVED_COUNT += 1
                 self.logger.info(f"Save To MongoDB: {work_id}(workId)<==>{user_id}(userId)")
         finally:
             self.mongodb_lock.release()
@@ -453,6 +472,7 @@ class Pixiv(BaseSpider):
             user_id = str(result.pop("userId"))
             ThreadUtils.createAndRunThread(self.tmp_save, user_id, result["workId"], result)
         else:
+            Pixiv.DB_EXIST_COUNT += 1
             _result = list((_data for _data in db_exist_result["works"] if work_id in _data))[0][work_id]
             _result["userId"] = db_exist_result["userId"]
             self.logger.info(f"Exists: {work_id}(workId)<==>{result['userId']}(userId)")

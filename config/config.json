@@ -16,7 +16,8 @@
         "password": "",
         "ip": "",
         "port": "",
-        "db_name": "spider",
+        "db_name": "",
         "collection": ""
-    }
+    },
+    "logged": true
 }

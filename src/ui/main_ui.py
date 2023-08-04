@@ -84,3 +84,17 @@ class PixivMainUi(QMainWindow):
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
+
+    def closeEvent(self, event) -> None:
+        mess = f"COUNT INFO:\n" \
+                 f"\tSUCCESS COUNT: \t{self.pixiv.SUCCESS_COUNT}\n" \
+                 f"\tFAILED COUNT: \t{self.pixiv.FAILED_COUNT}\n" \
+                 f"\tDOWNLOAD COUNT: \t{self.pixiv.DOWNLOAD_COUNT}\n" \
+                 f"\tDB_EXIST_COUNT: \t{self.pixiv.DB_EXIST_COUNT}\n" \
+                 f"\tDB_SAVED_COUNT: \t{self.pixiv.DB_SAVED_COUNT}\n\n" \
+                 f"\tSUCCESS RATE: \t{self.pixiv.FAILED_COUNT / self.pixiv.SUCCESS_COUNT}\n" \
+                 f"\tDB_REPEAT_RATE: \t" \
+                 f"{self.pixiv.DB_EXIST_COUNT / (self.pixiv.DB_SAVED_COUNT + self.pixiv.DB_EXIST_COUNT)}"
+        self.pixiv.logger.info(mess)
+        QMessageBox.information(self, "INFO", mess)
+        event.accept()
