@@ -107,8 +107,8 @@ class Pixiv(BaseSpider):
         :return requests.Response | None:
         """
         if self.requests_failed_count >= 4:
-            sleep(10)
             self.requests_failed_count -= 1
+            sleep(10)
         for i in range(5):
             header = headers or self.header
             try:
@@ -123,8 +123,8 @@ class Pixiv(BaseSpider):
 
                     self.requests_failed_count += 1
                     if self.requests_failed_count >= 4:
-                        sleep(10)
                         self.requests_failed_count -= 1
+                        sleep(10)
                     self.logger.warning(
                         f"Requests Failed: {url} status code: {response.status_code}(count: {self.requests_failed_count})")
                     continue
@@ -134,8 +134,8 @@ class Pixiv(BaseSpider):
                 self.logger.error(f"timeout => {url}")
                 self.requests_failed_count += 1
                 if self.requests_failed_count >= 4:
-                    sleep(10)
                     self.requests_failed_count -= 1
+                    sleep(10)
                 self.logger.warning(
                     f"Requests Failed: {url}{self.requests_failed_count})")
                 continue
