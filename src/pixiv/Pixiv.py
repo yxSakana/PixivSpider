@@ -119,7 +119,7 @@ class PixivSpider(QObject):
         work_id = info_data["workId"]
         image_url = info_data["start_url"]
         dir_name = os.sep.join([info_data["userName"], info_data["title"]])
-        illust_comment = info_data.get("illustComment", None) or ""  # TODO: 是否需要改???
+        illust_comment = info_data.get("description", None) or ""  # TODO: 是否需要改???
         info_data["image_urls"] = []
 
         # 排除重复
