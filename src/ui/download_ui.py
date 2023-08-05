@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import \
     QHeaderView, QSizePolicy
 from PyQt5.QtGui import QIcon
 
-from pixiv.pixiv import Pixiv
+from pixiv.Pixiv import PixivSpider
 from utils.qt_utils import *
 from utils.thread_utils import ThreadUtils
 
@@ -26,7 +26,7 @@ class PixivOnceWorksDownloadUi(QWidget):
     """
     单个作品
     """
-    def __init__(self, pixiv, parent: QWidget = None):
+    def __init__(self, pixiv: PixivSpider, parent: QWidget = None):
         super().__init__(parent=parent)
 
         self.pixiv = pixiv
@@ -36,10 +36,12 @@ class PixivOnceWorksDownloadUi(QWidget):
         self.url_label = QLabel("url(pid): ", self)
         self.url_edit = QLineEdit(self)
         self.url_edit.setPlaceholderText("输入作品链接(或 id)")
-        self.start_pb = QPushButton("Download", self)
+        self.search_pb = QPushButton(QIcon("resource/search.png"), "", self)
+        self.start_pb = QPushButton(QIcon("resource/Download.png"), "", self)
         self.layout_1 = QHBoxLayout()
         self.layout_1.addWidget(self.url_label)
         self.layout_1.addWidget(self.url_edit)
+        self.layout_1.addWidget(self.search_pb)
         self.layout_1.addWidget(self.start_pb)
         # 数据显示视图
         self.model_view = QTableView()
@@ -60,7 +62,19 @@ class PixivOnceWorksDownloadUi(QWidget):
         self.setLayout(self.layout)
 
         # connect slot
+        self.search_pb.clicked.connect(self.onSearch)
         self.start_pb.clicked.connect(self.onStart)
+
+    def onSearch(self):
+        url_or_id = self.url_edit.text()
+        if not url_or_id:
+            QMessageBox.warning(self, "Url Input Error", "输入为空!")
+            return
+
+        is_ok, result = self.pixiv.searchWorkInfo(url_or_id)
+        if is_ok:
+            initModel(result, self.model)
+            self.model_view.setModel(self.model)
 
     def onStart(self):
         url_or_id = self.url_edit.text()
@@ -68,7 +82,7 @@ class PixivOnceWorksDownloadUi(QWidget):
             QMessageBox.warning(self, "Url Input Error", "输入为空!")
             return
 
-        is_ok, result = self.pixiv.spider_once_work_page(url_or_id)
+        is_ok, result = self.pixiv.spiderOneWork(url_or_id)
         if is_ok:
             initModel(result, self.model)
             self.model_view.setModel(self.model)
@@ -93,7 +107,7 @@ class PixivUserWorksDownloadUi(QWidget):
     """
     用户
     """
-    def __init__(self, pixiv, parent: QWidget):
+    def __init__(self, pixiv: PixivSpider, parent: QWidget):
         super().__init__(parent)
 
         self.pixiv = pixiv
@@ -104,10 +118,12 @@ class PixivUserWorksDownloadUi(QWidget):
         self.url_label = QLabel("url(uid): ", self)
         self.url_edit = QLineEdit(self)
         self.url_edit.setPlaceholderText("输入用户id(仅仅包含id)")
-        self.start_pb = QPushButton("Download", self)
+        self.search_pb = QPushButton(QIcon("resource/search.png"), "", self)
+        self.start_pb = QPushButton(QIcon("resource/Download.png"), "", self)
         self.layout_1 = QHBoxLayout()
         self.layout_1.addWidget(self.url_label)
         self.layout_1.addWidget(self.url_edit)
+        self.layout_1.addWidget(self.search_pb)
         self.layout_1.addWidget(self.start_pb)
         # 数据显示视图
         self.model_view = QTableView()
@@ -130,8 +146,19 @@ class PixivUserWorksDownloadUi(QWidget):
         self.setLayout(self.layout)
 
         # connect slot
+        self.search_pb.clicked.connect(self.onSearch)
         self.start_pb.clicked.connect(lambda: ThreadUtils.createAndRunThread(self.onStart))
         self.pixiv.get_user_workId_signal.connect(self.addItem)
+
+    def onSearch(self):
+        url_or_id = self.url_edit.text()
+        if not url_or_id:
+            QMessageBox.warning(self, "Url Input Error", "输入为空!")
+            return
+
+        _, info = self.pixiv.searchUserInfo(url_or_id)
+        ModelToolkit.setKeyModel(info["mete"], self.model)
+        self.model_view.setModel(self.model)
 
     def onStart(self):
         url_or_id = self.url_edit.text()
@@ -159,7 +186,7 @@ class PixivTrendsDownloadUi(QWidget):
     """
     动态
     """
-    def __init__(self, pixiv: Pixiv, parent: QWidget | None = None):
+    def __init__(self, pixiv: PixivSpider, parent: QWidget | None = None):
         super().__init__(parent)
 
         self.pixiv = pixiv
@@ -220,7 +247,7 @@ class PixivTrendsDownloadUi(QWidget):
 
 
 class PixivFollowDownloadUi(QWidget):
-    def __init__(self, pixiv: Pixiv, parent: QWidget | None = None):
+    def __init__(self, pixiv: PixivSpider, parent: QWidget | None = None):
         super().__init__()
 
         self.pixiv = pixiv
@@ -241,7 +268,7 @@ class PixivFollowDownloadUi(QWidget):
 
 
 class PixivDownloadUi(QWidget):
-    def __init__(self, pixiv: Pixiv, parent: QWidget = None):
+    def __init__(self, pixiv: PixivSpider, parent: QWidget = None):
         super().__init__(parent)
 
         self.pixiv = pixiv

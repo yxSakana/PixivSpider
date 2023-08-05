@@ -60,13 +60,14 @@ class TabWidget(QTabWidget) :
 
 
 class PixivMainUi(QMainWindow):
-    def __init__(self, pixiv: Pixiv, parent: QWidget = None):
+    def __init__(self, pixiv: PixivSpider, parent: QWidget = None):
         super().__init__(parent)
 
         self.pixiv = pixiv
 
         # initUi
         self.setGeometry(550, 200, 950, 750)
+        self.setWindowIcon(QIcon("resource/pixiv.png"))
 
         # TabWidget
         self.tab_widget = TabWidget()

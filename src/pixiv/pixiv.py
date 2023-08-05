@@ -12,6 +12,7 @@
  @data: 2023-07-16 19:55:15
  @update: 2023-07-16 19:55:15
 """
+
 import os
 import re
 import json
@@ -49,7 +50,6 @@ class Pixiv(BaseSpider):
 
     def __init__(self, config_filename: str = "config.json") -> None:
         super().__init__(config_filename)
-        QObject.__init__(self)
         self.session = requests.session()
         connect_info = "mongodb://" + self.mongo_config["username"] + \
                        ":" + self.mongo_config["password"] + \
@@ -156,6 +156,9 @@ class Pixiv(BaseSpider):
             "version": self.__version_val,
         }
         api += urllib.parse.urlencode(params)
+        print(api)
+        from pprint import pprint
+        pprint(self.header)
         return self.requests_sub_page(url=api)  # TODO: ?? headers=self.follow_headers?
 
     def requests_follow_users_page(self, offset: int = 0, limit: int = 24) -> requests.Response:
@@ -342,7 +345,7 @@ class Pixiv(BaseSpider):
 
         :param str url: 
         :param str dir_name: , defaults to "NoDir"
-        :param str _filename: 如果有则按测参数来, defaults to None
+        :param str _filename: 如果有则按参数来, defaults to None
         :return bool: 是否成功
         """
         for i in range(5):

@@ -12,11 +12,23 @@
 
 from PyQt5.QtWidgets import QTableView
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QObject
 
 
-def initModel(data: dict, model: QStandardItemModel):
-    model.setColumnCount(2)
+class ModelToolkit(QObject):
+    @staticmethod
+    def setKeyModel(info: dict, model: QStandardItemModel):
+        model.setHorizontalHeaderLabels(["key", "val"])
+
+        for row, (key, val) in enumerate(info.items()):
+            key_item = QStandardItem(key)
+            val_item = QStandardItem(str(val))
+            model.setItem(row, 0, key_item)
+            model.setItem(row, 1, val_item)
+
+
+def initModel(data: dict, model: QStandardItemModel, count: int = 2):
+    model.setColumnCount(count)
 
     for row, (key, val) in enumerate(data.items()):
         key_item = model.item(row, 0)

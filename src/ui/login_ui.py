@@ -14,16 +14,17 @@ from PyQt5.QtWidgets import \
     QWidget, \
     QLabel, QLineEdit, QPushButton, QMessageBox, QSpacerItem, \
     QFormLayout, QVBoxLayout
+from PyQt5.QtGui import QIcon
 
 from pixiv.login import Login
-from pixiv.pixiv import Pixiv
+from pixiv.Pixiv import PixivSpider
 from utils.thread_utils import ThreadUtils
 
 
 class PixivLogin(QWidget):
     login_signal = pyqtSignal()
 
-    def __init__(self, pixiv: Pixiv, parent: QWidget | None = None):
+    def __init__(self, pixiv: PixivSpider, parent: QWidget | None = None):
         super().__init__(parent)
         self.login_script = Login()
         self.pixiv = pixiv
@@ -31,6 +32,8 @@ class PixivLogin(QWidget):
         # init ui
         # self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
         self.setGeometry(500, 500, 500, 250)
+        self.setWindowIcon(QIcon("resource/pixiv.png"))
+
         name_label_username = QLabel("username: ", self)
         self.edit_username = QLineEdit(self)
         self.edit_username.setPlaceholderText("输入用户名")

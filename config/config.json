@@ -1,23 +1,31 @@
 {
     "spider": {
-        "website": "https://www.bilibili.com",
-        "base_path": "data/",
-        "base_download_path": "data/",
-        "cookies_pools": [
-            "config/cookies.txt"
-        ],
-        "proxies": {
-            "http": "127.0.0.1:7890",
-            "https": "127.0.0.1:7890"
+        "website": "",
+        "Downloader": {
+            "download_path": "data/"
+        },
+        "Requests": {
+            "cookie_files": [
+                "config/cookies.txt"
+            ],
+            "proxies": {
+                "http": "127.0.0.1:7890",
+                "https": "127.0.0.1:7890"
+            },
+            "timeout": 5,
+            "how_many_error_sleep": 4,
+            "interval_after_error": 5
+        },
+        "Database": {
+            "mongo": {
+                "username": "",
+                "password": "",
+                "ip": "",
+                "port": 27017,
+                "db_name": "test",
+                "collection": "pixiv"
+            }
         }
-    },
-    "mongo": {
-        "username": "",
-        "password": "",
-        "ip": "",
-        "port": "",
-        "db_name": "",
-        "collection": ""
     },
     "logged": true
 }
