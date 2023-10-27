@@ -11,6 +11,7 @@
 import sys
 import threading
 import time
+from typing import Optional
 
 from PyQt5.QtCore import QObject, QThread, QMutex, QMutexLocker, QWaitCondition, pyqtSignal
 from utils.logger import Logger
@@ -20,7 +21,7 @@ class SThread(QThread):
     pause_sign = pyqtSignal()
     pursue_sign = pyqtSignal()
 
-    def __init__(self, parent: QObject | None = None):
+    def __init__(self, parent: Optional[QObject] = None):
         super().__init__(parent)
 
         self.mutex = QMutex()

@@ -13,7 +13,7 @@
 import json
 import urllib.parse
 from lxml import etree
-from typing import NewType
+from typing import NewType, Tuple, Union
 
 from utils.logger import Logger
 
@@ -27,7 +27,7 @@ class PixivParser(object):
 
         self.logger = Logger.get_logger(self.__class__.__name__)
 
-    def parseWorkId(self, url_or_id: int | str, base_url: str) -> tuple[str, str]:
+    def parseWorkId(self, url_or_id: Union[int, str], base_url: str) -> Tuple[str, str]:
         """
         通过传入的 url_or_id 解析出 作品的url 和 作品id
         :param url_or_id:
@@ -41,14 +41,14 @@ class PixivParser(object):
 
         return url, work_id
 
-    def parseUserId(self, uid_or_url: int | str):
+    def parseUserId(self, uid_or_url: Union[int, str]):
         return uid_or_url.split("/")[-1]
 
-    def parse_sub_page(self, html: str, work_id: int | str) -> ItemDict:
+    def parse_sub_page(self, html: str, work_id: Union[int, str]) -> ItemDict:
         """works页面
 
         :param str html: response.text
-        :param int | str work_id: 传入的页面的id
+        :param Union[int, str] work_id: 传入的页面的id
         :return dict: {
             "userId": => str
 

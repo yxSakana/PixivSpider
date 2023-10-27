@@ -11,6 +11,7 @@
 """
 
 import os.path
+from typing import Tuple
 
 from pixiv.PixivConfigure import PixivConfigure
 from pixiv.PixivRequester import PixivRequester
@@ -21,7 +22,7 @@ class PixivDownloader(Downloader):
     def __init__(self, requester: PixivRequester, configure: PixivConfigure):
         super().__init__(requester, configure)
 
-    def downloadPixivImage(self, url: str, filename: str) -> tuple[str, str]:
+    def downloadPixivImage(self, url: str, filename: str) -> Tuple[str, str]:
         filename = os.path.sep.join([filename, url.split("/")[-1]])
         return self.downloadImage(url, filename)
 

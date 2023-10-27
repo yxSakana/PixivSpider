@@ -12,6 +12,7 @@
 import os
 import sys
 import json
+from typing import Optional
 
 from PyQt5.QtWidgets import \
     QWidget, QLabel, QLineEdit, QPushButton, QTextEdit, QFrame, \
@@ -23,7 +24,7 @@ from pixiv.Pixiv import PixivSpider
 
 
 class PixivSettingUi(QWidget):
-    def __init__(self, pixiv: PixivSpider, parent: QWidget | None = None):
+    def __init__(self, pixiv: PixivSpider, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.pixiv = pixiv
 

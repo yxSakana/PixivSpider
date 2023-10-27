@@ -16,6 +16,7 @@
 import os
 import re
 from time import sleep
+from typing import Optional, Union, Tuple
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
@@ -33,7 +34,7 @@ class PixivSpider(QObject):
     get_user_workId_signal = pyqtSignal(int)
     trends_info_signal = pyqtSignal(int, str, str, str)
 
-    def __init__(self, config_filename: str = "config/config.json", parent: QObject | None = None):
+    def __init__(self, config_filename: str = "config/config.json", parent: Optional[QObject] = None):
         super().__init__(parent)
 
         self.configure = PixivConfigure(config_filename)
@@ -50,7 +51,7 @@ class PixivSpider(QObject):
         self.downloader.reloadConfigure()
         self.mongodb.reloadConfigure()
 
-    def searchWorkInfo(self, url_or_id: str | int) -> tuple[bool, dict]:
+    def searchWorkInfo(self, url_or_id: Union[str, int]) -> Tuple[bool, dict]:
         """搜索单个作品的信息
 
         :param url_or_id:
@@ -75,7 +76,7 @@ class PixivSpider(QObject):
             result = self.parser.parse_sub_page(response.text, work_id)  # 解析
             return True, result
 
-    def searchUserInfo(self, uid_or_url: str | int) -> tuple[bool, dict]:
+    def searchUserInfo(self, uid_or_url: Union[str, int]) -> Tuple[bool, dict]:
         """
 
         :param uid_or_url:
@@ -87,7 +88,7 @@ class PixivSpider(QObject):
 
         return True, info
 
-    def spiderOneWork(self, url_or_id: str | int) -> tuple[bool, dict]:
+    def spiderOneWork(self, url_or_id: Union[str, int]) -> Tuple[bool, dict]:
         """爬取一次一个works(作品)页面
 
         :param url_or_id:
@@ -176,7 +177,7 @@ class PixivSpider(QObject):
         for i in range(1, 100):  # TODO: 把固定的100页改的更合理
             self.spiderOneTrendsPage(i, mode=mode)
 
-    def spider_user_works(self, uid_or_url: int | str) -> None:
+    def spider_user_works(self, uid_or_url: Union[str, int]) -> None:
         """爬取指定用户的所有作品
 
         :param uid_or_url:

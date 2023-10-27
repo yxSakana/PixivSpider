@@ -9,6 +9,8 @@
   @author yx 
   @date 2023-08-03 20:12
 """
+from typing import Optional, Union
+
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import \
     QWidget, \
@@ -24,7 +26,7 @@ from utils.thread_utils import ThreadUtils
 class PixivLogin(QWidget):
     login_signal = pyqtSignal()
 
-    def __init__(self, pixiv: PixivSpider, parent: QWidget | None = None):
+    def __init__(self, pixiv: PixivSpider, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.login_script = Login()
         self.pixiv = pixiv

@@ -12,6 +12,7 @@
 import json
 import os
 import sys
+from typing import Tuple
 
 from spider_toolkit.Configure import Configure
 from spider_toolkit.Request import Requester
@@ -41,7 +42,7 @@ class Downloader(object):
     def reloadConfigure(self):
         self.initConfig()
 
-    def downloadImage(self, url: str, filename: str) -> tuple[str, str]:
+    def downloadImage(self, url: str, filename: str) -> Tuple[str, str]:
         """
 
         :param url:
@@ -68,7 +69,7 @@ class Downloader(object):
             else:
                 return "", ""
 
-    def downloadJsonObj(self, json_obj: dict, filename: str, encoding: str = "utf-8") -> tuple[str, str]:
+    def downloadJsonObj(self, json_obj: dict, filename: str, encoding: str = "utf-8") -> Tuple[str, str]:
         """
 
         :param json_obj:

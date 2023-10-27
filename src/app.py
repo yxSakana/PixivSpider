@@ -6,7 +6,9 @@
  @data: 2023-07-16 20:09:07
  @update: 2023-07-16 20:09:07
 """
+import json
 import sys
+from typing import Optional, Union
 
 from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QApplication
@@ -17,8 +19,9 @@ from ui.main_ui import PixivMainUi
 
 
 class PixivApp(QObject):
-    def __init__(self, config_filename: str = "config/config.json", parent: QObject | None = None):
+    def __init__(self, config_filename: str = "config/config.json", parent: Optional[QObject] = None):
         super().__init__(parent)
+        self.config_filename = config_filename
         self.pixiv = PixivSpider(config_filename)
         self.login_ui = PixivLogin(self.pixiv)
         self.main_ui = PixivMainUi(self.pixiv)
@@ -36,7 +39,7 @@ class PixivApp(QObject):
             self.login_ui.show()
             with open(self.pixiv.configure.config_filename, "w") as f:
                 self.pixiv.configure.config_json["logged"] = "false"
-                f.write(self.pixiv.configure.config_json)
+                f.write(json.dumps(self.pixiv.configure.config_json))
                 self.pixiv.reloadConfigure()
 
 

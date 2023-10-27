@@ -1,31 +1,31 @@
 {
-    "spider": {
-        "website": "",
-        "Downloader": {
-            "download_path": "data/"
-        },
-        "Requests": {
-            "cookie_files": [
-                "config/cookies.txt"
-            ],
-            "proxies": {
-                "http": "127.0.0.1:7890",
-                "https": "127.0.0.1:7890"
-            },
-            "timeout": 5,
-            "how_many_error_sleep": 4,
-            "interval_after_error": 5
-        },
-        "Database": {
-            "mongo": {
-                "username": "",
-                "password": "",
-                "ip": "",
-                "port": 27017,
-                "db_name": "test",
-                "collection": "pixiv"
-            }
-        }
+  "spider": {
+    "website": "",
+    "Downloader": {
+      "download_path": "data/"
     },
-    "logged": true
+    "Requests": {
+      "cookie_files": [
+        "config/cookies.txt"
+      ],
+      "proxies": {
+        "http": "127.0.0.1:7890",
+        "https": "127.0.0.1:7890"
+      },
+      "timeout": 5,
+      "how_many_error_sleep": 4,
+      "interval_after_error": 5
+    },
+    "Database": {
+      "mongo": {
+        "username": "",
+        "password": "",
+        "ip": "",
+        "port": 27017,
+        "db_name": "test",
+        "collection": "pixiv"
+      }
+    }
+  },
+  "logged": true
 }

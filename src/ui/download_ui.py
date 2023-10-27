@@ -9,6 +9,7 @@
 
 
 import sys
+from typing import Optional, Union
 
 from PyQt5.QtWidgets import \
     QApplication, QWidget, QTabWidget, \
@@ -186,7 +187,7 @@ class PixivTrendsDownloadUi(QWidget):
     """
     动态
     """
-    def __init__(self, pixiv: PixivSpider, parent: QWidget | None = None):
+    def __init__(self, pixiv: PixivSpider, parent: Optional[QWidget] = None):
         super().__init__(parent)
 
         self.pixiv = pixiv
@@ -247,7 +248,7 @@ class PixivTrendsDownloadUi(QWidget):
 
 
 class PixivFollowDownloadUi(QWidget):
-    def __init__(self, pixiv: PixivSpider, parent: QWidget | None = None):
+    def __init__(self, pixiv: PixivSpider, parent: Optional[QWidget] = None):
         super().__init__()
 
         self.pixiv = pixiv

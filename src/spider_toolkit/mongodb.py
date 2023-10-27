@@ -1,11 +1,12 @@
 from pymongo import MongoClient
 import pymongo
+from typing import Union
 
 from utils.logger import Logger
 
 
 class MongoDB(object):
-    def __init__(self, info: dict | str) -> None:
+    def __init__(self, info: Union[dict, str]) -> None:
         if isinstance(info, dict):
             host = info["ip"]
             port = int(info.get("port", 27017))

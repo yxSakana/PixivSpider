@@ -12,7 +12,7 @@
 
 import re
 import urllib.parse
-from typing import Literal
+from typing import Literal, Optional, Union
 
 import requests
 
@@ -69,7 +69,7 @@ class PixivRequester(Requester):
     def version_val(self):
         return self.__version_val
 
-    def requestsTrendsPage(self, page: int, mode: FollowRequestsMode = "r18") -> requests.Response | None:
+    def requestsTrendsPage(self, page: int, mode: FollowRequestsMode = "r18") -> Optional[requests.Response]:
         """动态页面
 
         :param int page:
@@ -105,10 +105,10 @@ class PixivRequester(Requester):
         }
         return self.get(api, headers=self.follow_header, params=params)
 
-    def requestsUserInfoApi(self, uid: int | str) -> requests.Response:
+    def requestsUserInfoApi(self, uid: Union[int, str]) -> requests.Response:
         """用户信息接口
 
-        :param int | str uid: uid
+        :param Union[int, str] uid: uid
         :return requests.Response:
         """
         api = self.api["user_info"].format(uid=uid)
@@ -118,10 +118,10 @@ class PixivRequester(Requester):
         }
         return self.get(api, params=params, headers=self.follow_header)
 
-    def requests_get_user_works_api(self, uid: int | str) -> requests.Response:
+    def requests_get_user_works_api(self, uid: Union[int, str]) -> requests.Response:
         """获取用户所有作品id
 
-        :param int | str uid: uid
+        :param Union[int, str] uid: uid
         :return requests.Response:
         """
         api = self.api["get_user_all_works"].format(uid=str(uid))

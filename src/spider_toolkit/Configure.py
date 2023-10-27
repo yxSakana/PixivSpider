@@ -44,6 +44,7 @@ import json
 import logging
 import os.path
 import sys
+from typing import Optional
 
 from utils.logger import Logger
 
@@ -70,7 +71,7 @@ class Configure(object):
         self.readConfigFile()
 
     @staticmethod
-    def readFile(filename: str, logger: logging.Logger, encoding: str = "utf-8") -> str | None:
+    def readFile(filename: str, logger: logging.Logger, encoding: str = "utf-8") -> Optional[str]:
         if os.path.exists(filename):
             with open(filename, "r", encoding=encoding) as file:
                 return file.read()

@@ -12,6 +12,7 @@
 import os.path
 import sys
 from time import sleep
+from typing import Optional
 
 import requests.sessions
 
@@ -65,9 +66,9 @@ class Requester(object):
 
     def get(self,
             url: str,
-            params: dict | None = None,
-            headers: dict | None = None,
-            cookie: str | None = None) -> requests.Response:
+            params: Optional[dict] = None,
+            headers: Optional[dict] = None,
+            cookie: Optional[str] = None) -> requests.Response:
         """
 
         :param url:
