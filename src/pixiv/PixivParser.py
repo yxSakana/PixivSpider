@@ -67,16 +67,6 @@ class PixivParser(object):
             "description": 描述 => str
         }
         """
-        result = {
-            "userId": "",
-            "workId": str(work_id),
-            "start_url": None,
-            "title": "NoTitle",
-            "pageCount": 0,
-            "userName": "NoUserName",
-            "tags": [],
-            "description": ""
-        }
         tree = etree.HTML(html)
         preload_data = json.loads(tree.xpath('//*[@id="meta-preload-data"]/@content')[0])
 
@@ -84,6 +74,7 @@ class PixivParser(object):
             body = preload_data["illust"][str(work_id)]
             result = {
                 "userId": list(preload_data["user"].keys())[0],
+                "workId": str(work_id),
                 "start_url": body["urls"]["original"],
                 "title": body["title"],
                 "pageCount": int(body["pageCount"]),
