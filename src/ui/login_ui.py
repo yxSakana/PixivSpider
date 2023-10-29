@@ -72,12 +72,12 @@ class PixivLogin(QWidget):
 
         cookies = self.login_script.login(username, pwd)
         if cookies:
-            with open(self.pixiv.cookies_filenames[0], "w") as file:
+            with open(self.pixiv.configure.cookies_filenames[0], "w") as file:
                 file.write(cookies)
             self.login_signal.emit()
-            with open(self.pixiv.config_filename, "w") as file:
-                self.pixiv.config_json["logged"] = "true"
-                self.pixiv.reloadConfig()
+            with open(self.pixiv.configure.config_filename, "w") as file:
+                self.pixiv.configure.config_json["logged"] = "true"
+                self.pixiv.reloadConfigure()
             self.hide()
         else:
             QMessageBox.warning(self, "Error", "用户名或密码错误!")

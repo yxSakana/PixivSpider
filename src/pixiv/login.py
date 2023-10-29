@@ -31,8 +31,8 @@ class Login(object):
         """
         try:
             self.driver.get(self.__login_api)
-            uname_input = self.driver.find_element(By.XPATH, '//input[contains(@class, sc-bn9ph6) and contains(@class, "degQSE")]')
-            passwd_input = self.driver.find_element(By.XPATH, '//input[contains(@class, sc-bn9ph6) and contains(@class, "hfoSmp")]')
+            uname_input = self.driver.find_element(By.XPATH, "//input[@autocomplete='username']")
+            passwd_input = self.driver.find_element(By.XPATH, "//input[@autocomplete='current-password']")
             uname_input.send_keys(username)
             passwd_input.send_keys(passwd)
             uname_input.submit()

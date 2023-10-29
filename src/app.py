@@ -40,7 +40,7 @@ class PixivApp(QObject):
             with open(self.pixiv.configure.config_filename, "w") as f:
                 self.pixiv.configure.config_json["logged"] = "false"
                 f.write(json.dumps(self.pixiv.configure.config_json))
-                self.pixiv.reloadConfigure()
+            self.pixiv.reloadConfigure()
 
 
 if __name__ == "__main__":
